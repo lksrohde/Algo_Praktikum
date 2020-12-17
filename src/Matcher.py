@@ -4,19 +4,22 @@ import geopandas as geopd
 
 nom = Nominatim()
 
-def getData(path):
-    return open(path, "r", encoding="iso-8859-1")    
 
-file = getData("/Users/lukas/Documents/Uni/7.Semester/Algo_Praktikum/sensibleData/timetables/Data/rohdaten/stamm/bfkoord.txt")
+def get_data(path):
+    return open(path, "r", encoding="iso-8859-1")
+
+
+file = get_data(
+    "/Users/lukas/Documents/Uni/7.Semester/Algo_Praktikum/sensibleData/timetables/Data/rohdaten/stamm/bfkoord.txt")
 lines = file.readlines()
 
 for line in lines:
-    lineSplitted = line.split(' ') 
-    lineSplitted = [lineSplitted[0],lineSplitted[2],lineSplitted[1]]
+    lineSplit = line.split(' ')
+    lineSplit = [lineSplit[0], lineSplit[2], lineSplit[1]]
 
-    if (lineSplitted[0].startswith('0') or lineSplitted[0].startswith('80')):
-        stelle = nom.query(lineSplitted[1], lineSplitted[2], reverse=True, zoom=18)
-        
-        print(stelle.areaId())
-        print(stelle.address())
-        print(lineSplitted[0])
+    if lineSplit[0].startswith('0') or lineSplit[0].startswith('80'):
+        location = nom.query(lineSplit[1], lineSplit[2], reverse=True, zoom=18)
+
+        print(location.areaId())
+        print(location.address())
+        print(lineSplit[0])
