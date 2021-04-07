@@ -3,20 +3,19 @@ import json
 import os
 
 import geopandas as geopd
-import geopy
 import pandas as pd
 import shapely.geometry
 
-geopy_nom = geopy.Nominatim(user_agent="fahrplan_matcher.py")
+import overpy
 
-dataPath = os.path.dirname(__file__) + "/data/"
-timetables = dataPath + "sensibleData/timetables/Data/rohdaten/stamm"
-prognose = dataPath + "sensibleData/verkehrsverflechtungsprognose/PVMatrix_BVWP15_P2030/PVMatrix_BVWP15_P2030.csv"
-vg = dataPath + "sensibleData/vg250/vg250_kompakt_3112/VG250_F.shp"
+dataPath = os.path.dirname(__file__) + "/data"
+timetables = dataPath + "/sensibleData/timetables/Data/rohdaten/stamm"
+prognose = dataPath + "/sensibleData/verkehrsverflechtungsprognose/PVMatrix_BVWP15_P2030/PVMatrix_BVWP15_P2030.csv"
+vg = dataPath + "/sensibleData/vg250/vg250_kompakt_3112/VG250_F.shp"
 
-verkehrszellen_mapping = dataPath + "sensibleData/verkehrsverflechtungsprognose/PVMatrix_BVWP15_P2030/Verkehrszellen_BVWP15.xlsx"
+verkehrszellen_mapping = dataPath + "/sensibleData/verkehrsverflechtungsprognose/PVMatrix_BVWP15_P2030/Verkehrszellen_BVWP15.xlsx"
 json_haltestellen = timetables + "/newData/haltestellen"
-aggregated_nuts_regions = dataPath + "nuts.geojson/aggregated_nuts_regions.json"
+aggregated_nuts_regions = dataPath + "/nuts.geojson/aggregated_nuts_regions.json"
 
 
 def read_timetable(path):
@@ -36,7 +35,7 @@ def match_kreis_haltestelle_simplified():
     aggregated_nuts_json = open(aggregated_nuts_regions, "r")
     aggregated_nuts_data = json.load(aggregated_nuts_json)
 
-    de_path = dataPath + "landkreise_simplify0.geojson"
+    de_path = dataPath + "/landkreise_simplify0.geojson"
     de_geo_json = geopd.read_file(de_path)
 
     nuts_path = "/Users/lukas/Documents/Uni/7.Semester/Algo_Praktikum/src/data/exact_nuts.geojson/NUTS_RG_01M_2010_4326.geojson"
@@ -46,15 +45,38 @@ def match_kreis_haltestelle_simplified():
     haltestellen_data = read_timetable(timetables + "/bfkoord.txt")
 
     # Zuordnung Kreisname auf KKZ
-    excel_file = pd.ExcelFile(verkehrszellen_mapping)
-    prognose_map_data_de = pd.read_excel(excel_file, "ME1_D_AKS")
-    prognose_map_data_rest = pd.read_excel(excel_file, "ME1_Ausland")
+    #excel_file = open(verkehrszellen_mapping, "r", encoding="iso-8859-1")
+    prognose_map_data_de = pd.read_excel(verkehrszellen_mapping, "ME1_D_AKS", engine="openpyxl")
+    prognose_map_data_rest = pd.read_excel(verkehrszellen_mapping, "ME1_Ausland", engine="openpyxl")
 
     output_file = open(json_haltestellen + "_mapped.json", "w")
     levl_codes = {
-        "0": ["N", "FIN", "EE", "LV", "LT", "RU2", "RU1", "BY", "UA", "MD", "RO", "BG", "TR"
-            , "GR", "MK", "AL", "XK", "ME", "SRB", "BIH", "HR", "SL", "ES", "PT", "IRL"]
+        "0": [
+            "N", "FIN", "EE", "LV", "LT", "RU2", "RU1", "BY", "UA", "MD", "RO", "BG", "TR",
+            "GR", "MK", "AL", "XK", "ME", "SRB", "BIH", "HR", "SL", "ES", "PT", "IRL"
+        ]
     }
+
+    osm_tags = {
+        "Fz1": [
+            '"landuse"="commercial"', '"building"="commercial"', '"building"="industrial"', '"building"="office"'
+        ],
+        "Fz2": [
+            '"amenity"="college"', '"amenity"="school"', '"amenity"="university"'
+        ],
+        "Home": [
+            '"building"="apartments"', '"building"="bungalow"', '"building"="cabin"',
+            '"building"="detached"', '"building"="dormitory"', '"building"="house"', '"building"="residential"'
+        ]
+    }
+
+    def build_query(tag):
+        query = "[out:json][timeout:600]; ("
+        for string in osm_tags[tag]:
+            query = query + "relation[" + string + "]({{bbox}}); "
+        query = query + "); out center;"
+
+        return query
 
     def handle_region(line_split):
         lon = float(line_split[1])
@@ -68,11 +90,19 @@ def match_kreis_haltestelle_simplified():
             coords = shapely.geometry.Point(lat, lon)
 
             print("Current Point: ", coords)
+
+
             # Handle Germany
             for i, kreis in enumerate(de_geo_json['geometry']):
+
+                # osm_region = pyrosm.pyrosm.OSM("europe-latest.osm.pbf", kreis)
+
+
+                ''' 
                 if kreis.contains(coords):
                     print(line_split[0], coords, de_geo_json['GEN'][i], de_geo_json['AGS'][i])
                     return line_split[0], coords, de_geo_json['GEN'][i], de_geo_json['AGS'][i]
+                '''
             print("Deutschland gecheckt!")
 
             #Handle Nuts
@@ -99,11 +129,8 @@ def match_kreis_haltestelle_simplified():
                             return line_split[0], coords, name, aggregated
 
             print("Going Broader")
-    # Generate Master File
-    # Data: DB_ID, Point, Region, KKZ/NUTS (VP_ID)
-    dict_file = {}
 
-    csv_file = open('file_mapping_wtf.csv', 'w')
+    csv_file = open('file_mapping.csv', 'w')
     csv_writer = csv.writer(csv_file)
     header = ['db_ip', 'point', 'region', 'vp_ip']
     csv_writer.writerow(header)
@@ -118,12 +145,10 @@ def match_kreis_haltestelle_simplified():
 
             db_ip, point, region, vp_ip = handle_region(line_split)
 
-            #dict_entry = {"DB_IP": db_ip, "POINT": {"lon": line_split[1], "lat": line_split[2]}, "REGION": region, "VP_IP": vp_ip}
-            #dict_file[vp_ip] = dict_entry
-
             csv_writer.writerow([db_ip, point, region, vp_ip])
 
 
-    #output_file.write(dict_file.__str__().replace("'",'"'))
+
+
 
 match_kreis_haltestelle_simplified()
