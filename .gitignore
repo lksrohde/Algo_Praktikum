@@ -137,3 +137,6 @@ src/reiseketten/reisekette_v03.csv
 *.csv
 *.geojson
 *.pbf
+*.json
+
+venvAlg/
