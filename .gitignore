@@ -133,3 +133,7 @@ NUTS_ALL_LEVELS.png
 src/file_mapping.csv
 
 src/reiseketten/reisekette_v03.csv
+
+*.csv
+*.geojson
+*.pbf
