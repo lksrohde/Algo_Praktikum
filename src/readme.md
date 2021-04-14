@@ -1,10 +1,3 @@
----
-geometry: margin=2cm
-title: Algorithmen Praktikum 
-author: Lukas Rohde
-date: 14.4.2021
-...
-
 Die Abgabe besteht aus 3 verschiedenen Skripts, welche aufeinander aufbauen. Die Skripte erstellen jeweils Files, welche
 in den dazugehörigen Ordnern unter "src/" zu finden sind.
 
