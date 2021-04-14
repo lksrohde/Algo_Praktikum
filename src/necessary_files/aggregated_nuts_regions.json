@@ -1,0 +1,194 @@
+{
+    "23014": {
+        "name": "Nordschweden", 
+        "regions": ["SE32","SE33"]
+    },
+    "23011": {
+        "name": "Stockholm/Mittelschweden Ost", 
+        "regions": ["SE312","SE313","SE1","SE21"]
+    },
+    "23012": {
+        "name": "Göteborg/Mittelschweden West", 
+        "regions": ["SE311","SE23"]
+    },
+    "21016": {
+        "name": "Jütland Nord",
+        "regions": ["DK05", "DK04"]
+    },
+    "21011": {
+        "name": "Kopenhagen",
+        "regions": ["DK012", "DK011", "DK013", "DK021"]
+    },
+    "21013": {
+        "name": "Bornholm",
+        "regions": ["DK014"]
+    },
+    "36012": {
+        "name": "Großbritannien Rest",
+        "regions": ["UKM", "UKC", "UKN", "UKD", "UKE", "UKF", "UKL", "UKG", "UKK"]
+    },
+    "36011": {
+        "name": "London/Südostengland",
+        "regions": ["UKH", "UKJ", "UKI"]
+    },
+    "41024": {
+        "name": "Normandie/Centre",
+        "regions": ["FR25", "FR23", "FR24"]
+    },
+    "41041": {
+        "name": "Nancy/Lothringen Süd",
+        "regions": ["FR411", "FR412", "FR414"]
+    },
+    "41045": {
+        "name": "Franche Comte",
+        "regions": ["FR43"]
+    },
+    "32024": {
+        "name": "Lüttich",
+        "regions": ["BE335", "BE332", "BE334", "BE331", "BE336"]
+    },
+    "32011": {
+        "name": "Brüssel",
+        "regions": ["BE24", "BE100"]
+    },
+    "31041": {
+        "name": "Eindhoven/Nordbrabant Ost",
+        "regions": ["NL414", "NL413"]
+    },
+    "31045": {
+        "name": "Nordbrabant West",
+        "regions": ["NL412", "NL411"]
+    },
+    "31032": {
+        "name": "Apeldoom",
+        "regions": ["NL224", "NL221"]
+    },
+    "31034": {
+        "name": "Zwolle",
+        "regions": ["NL212", "NL211"]
+    },
+    "31024": {
+        "name": "Drenthe West",
+        "regions": ["NL133", "NL131"]
+    },
+    "31021": {
+        "name": "Groningen",
+        "regions": ["NL113", "NL112"]
+    },
+    "53032": {
+        "name": "Italien Süd",
+        "regions": ["ITF", "ITG"]
+    },
+    "71011": {
+        "name": "Prag",
+        "regions": ["CZ02", "CZ01"]
+    },
+    "71017": {
+        "name": "Hradec-Kralove",
+        "regions": ["CZ052", "CZ053"]
+    },
+    "71019": {
+        "name": "Ostrava",
+        "regions": ["CZ07", "CZ08"]
+    },
+    "72011": {
+        "name": "Bratislava/ Slowakei West",
+        "regions": ["SK01", "SK02"]
+    },
+    "72012": {
+        "name": "Slowakei Mitte/Ost",
+        "regions": ["SK03", "SK04"]
+    },
+    "73022": {
+        "name": "Breslau",
+        "regions": ["PL514", "PL516", "PL517", "PL518"]
+    },
+    "73021": {
+        "name": "Oppeln",
+        "regions": ["PL52"]
+    },
+    "73036": {
+        "name": "Köslin",
+        "regions": ["PL423", "PL422"]
+    },
+    "73011": {
+        "name": "Warschau",
+        "regions": ["PL1", "PL34"]
+    },
+    "52017": {
+        "name": "Bischofshofen",
+        "regions": ["AT322", "AT321"]
+    },
+    "52014": {
+        "name": "Linz",
+        "regions": ["AT315", "AT314", "AT312", "AT313"]
+    },
+    "51018": {
+        "name": "Chur",
+        "regions": ["CH056", "CH051"]
+    },
+    "51017": {
+        "name": "St. Gallen",
+        "regions": ["CH055", "CH054", "CH053"]
+    },
+    "31042": {
+        "name": "Venlo",
+        "regions": ["NL421"]
+    },
+    "31044": {
+        "name": "Maastricht",
+        "regions": ["NL423"]
+    },
+    "31043": {
+        "name": "Roermond",
+        "regions": ["NL422"]
+    },
+    "9189": {
+        "name": "Traunstein",
+        "regions": ["DE21M"]
+    },
+    "9777": {
+        "name": "Ostallgäu",
+        "regions": ["DE27B"]
+    },
+    "73035": {
+        "name": "Stettin-Umland",
+        "regions": ["PL425"]
+    },
+    "73034": {
+        "name": "Stettin",
+        "regions": ["PL424"]
+    },
+    "73023": {
+        "name": "Liegnitz",
+        "regions": ["PL515"]
+    },
+    "1002": {
+        "name": "Plön",
+        "regions": ["DEF0A"]
+    },
+    "71013": {
+        "name": "Pilsen",
+        "regions": ["CZ032"]
+    },
+    "32013": {
+        "name": "Hasselt",
+        "regions": ["BE22"]
+    },
+    "31035": {
+        "name": "Enschede",
+        "regions": ["NL213"]
+    },
+    "1054": {
+        "name": "Nordfriesland",
+        "regions": ["DEF07"]
+    },
+    "71014": {
+        "name": "Karlsbad",
+        "regions": ["CZ041"]
+    },
+    "71015": {
+        "name": "Usti",
+        "regions": ["CZ042"]
+    }
+}

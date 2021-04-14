@@ -1,95 +1,104 @@
-import overpy
-import os
 import csv
-import esy.osmfilter
+import os
+
+import pyrosm
 from esy.osmfilter import run_filter
 from esy.osmfilter import Node, Way, Relation
-import pyrosm
-import geopandas as geopd
-
-dataPath = os.path.dirname(__file__) + "/data"
-
-osm_countries = ["Deutschland"]
 
 osm_tags = {
-        "Fz1": [
-            '"landuse"="commercial"', '"building"="commercial"', '"building"="industrial"', '"building"="office"'
-        ],
-        "Fz2": [
-            '"amenity"="college"', '"amenity"="school"', '"amenity"="university"'
-        ],
-        "Home": [
-            '"building"="apartments"', '"building"="bungalow"', '"building"="cabin"',
-            '"building"="detached"', '"building"="dormitory"', '"building"="house"', '"building"="residential"'
-        ]
-    }
-
-osm_tags_rebuild = {
     "Fz1": {"landuse": ["commercial"], "building": ["commercial", "industrial", "office"]},
     "Fz2": {"amenity": ["college", "school", "university"]},
-    "Home": {"building": ["apartments", "bungalow", "cabin", "detached", "dormitory", "house", "residential"]}
+    "Home": {"building": ["apartments", "bungalow", "cabin", "detached", "dormitory", "house", "residential"],
+             "landuse": ["residential"]}
 }
 
-def build_query(tag, country):
-    query = '[out:json][timeout:1200]; area[name="' + country + '"]->.searchArea; ('
-    for string in osm_tags[tag]:
-        query = query + "relation[" + string + "](area.searchArea); "
-    query = query + "); out center;"
-    print(query)
-    return query
+# Versucht automatisch pbf files in "osm-pbf" zu dem gewählten Datensatz zu finden
+# Bsp Datensätze sind:
+# "pyrosm.data.sources.subregions.germany" -> Alle Subregionen von Deutschland
+# "pyrosm.data.Europe.regions" -> Alle Länder in Europa
+regions = pyrosm.data.sources.europe.regions
 
-def use_overpass():
-    api = overpy.Overpass()
+tags = ["Fz2", "Home"]
 
-    for country in osm_countries:
-        output_file_json = open(dataPath + "/osm_pointData/osm_points_" + country + ".json", "a")
-        print("Country: " + country)
-        for tag in osm_tags:
-            print("Tag: " + tag)
-            query = build_query(tag, country)
-            json_dump = api.query(query).__dict__
+build_with_esy = True
 
-            output_file_json.write(json_dump.__str__())
 
-def use_local():
-    def find_already_parsed(dir):
-        output = []
-        for d in os.walk(dir):
-            output.append(d[0])
-        return output
-
+def build_files(tag):
     if __name__ == '__main__':
-        tag = "Fz2"
-        subregions = pyrosm.data.sources.subregions
-        pbf_input = dataPath + "/osm-pbf/"
-        output = dataPath + "/osm-pbf/out/"
 
-        print(subregions.germany.available)
-        already_parsed = find_already_parsed(output)
+        pbf_input = "osm-pbf/"
 
-        for region in subregions.germany.available:
-            print(region)
+        coords_list = []
 
-            skip = False
-            for parsed in already_parsed:
-                if region in parsed:
-                    skip = True
-            if skip: continue
+        for region in regions:
+            print("Next Region: " + region)
 
             file = pyrosm.get_data(region, directory=pbf_input)
 
-            print(region + " Downloaded!")
-            output = dataPath + "/osm-pbf/out/" + region + "_" + tag
+            print("Got File!")
 
             osm = pyrosm.OSM(file)
 
-            # Latitude, Longitude in Geometry
-            data = osm.get_data_by_custom_criteria(custom_filter=osm_tags_rebuild[tag], filter_type="keep", keep_nodes=False, keep_ways=True,
-                                            keep_relations=True)
+            print("Loaded File!")
+
+            data = osm.get_data_by_custom_criteria(custom_filter=osm_tags[tag], filter_type="keep", keep_nodes=True,
+                                                   keep_ways=False,
+                                                   keep_relations=False)
+
             centroids = data.centroid
 
-            # centroids.to_file(export_file)
-            geopd.GeoSeries.to_file(centroids, output)
+            for i, coords in enumerate(centroids.x):
+                coords_list.append([centroids.x[i], centroids.y[i]])
+
+            print("Filtered threw File!")
+            print(" ")
+
+        csv_file = open('coord_files/test_coords_' + tag + '.csv', 'w')
+        csv_writer = csv.writer(csv_file)
+
+        csv_writer.writerows(coords_list)
 
 
-use_local()
+def build_files_esy(tag):
+    pbf_input = "osm-pbf/"
+    json_out = "esy_out/" + tag + "/"
+
+    prefilter = {Node: osm_tags[tag], Way: osm_tags[tag], Relation: osm_tags[tag]}
+
+    whitefilter = []
+    blackfilter = []
+
+    csv_out = open("coord_files/coords_" + tag + ".csv", "w")
+    csv_writer = csv.writer(csv_out)
+    csv_writer.writerow(["Lat", "Lon"])
+
+    for pbf in os.listdir(pbf_input):
+        print(pbf)
+        try:
+            json = json_out + pbf + ".json"
+
+            [data, _] = run_filter(tag, pbf_input + pbf, json, prefilter, whitefilter, blackfilter, True, False, False,
+                                   True)
+
+            lon_lat = []
+            for node in data['Node']:
+                lonlat = data['Node'][node]['lonlat']
+                lon_lat.append([lonlat[0], lonlat[1]])
+            csv_writer.writerows(lon_lat)
+
+        except:
+            print(pbf)
+            continue
+
+
+if __name__ == '__main__':
+    for tag in tags:
+
+        if build_with_esy:
+            build_files_esy(tag)
+        else:
+            build_files(tag)
+
+        print("Finished Parsing all Regions.")
+
+    print("Finished all Tags")

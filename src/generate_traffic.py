@@ -1,73 +1,107 @@
 import csv
 import os
 import random
-import time
 
 dataPath = os.path.dirname(__file__) + "/data"
-trafficPath = dataPath + "/sensibleData/verkehrsverflechtungsprognose/PVMatrix_BVWP15_P2030/PVMatrix_BVWP15_P2030.csv"
-matchedFahrplan = dataPath + "/haltestellen_mapped.json"
+trafficPath = dataPath + "/PVMatrix_BVWP15_P2030.csv"
+perTagFiles = dataPath + "/osm-pbf/"
+
+day = 1616626800
+prob_quelle_random = 0.15
+out_name = 'reisekette_v1.1'
+
+# Outputfile
+csv_file = open('reiseketten/' + out_name + '.csv', 'w')
+csv_writer = csv.writer(csv_file)
+
+# Init Outputfile und Format
+header = ['q_lat', 'q_lon', 'z_lat', 'z_lon', 'zeit', 'reverse']
+csv_writer.writerow(header)
 
 classes = {
-        "Fz1" : [{"start" : 360 , "inter" : 540 - 360}, {"start" : 960 , "inter" : 1140 - 960}] ,   # 6 - 9 -- 16 - 19  (360 - 540 -- 960 - 1140)
-        "Fz2" : [{"start" : 360 , "inter" : 540 - 360}, {"start" : 960 , "inter" : 1140 - 960}] ,   # 6 - 9 -- 16 - 19  (360 - 540 -- 960 - 1140)
-        "Fz3" : [{"start" : 540 , "inter" : 960 - 540}],                                            # 9 -- 16           (540 - 960)
-        "Fz4" : [{"start" : 360 , "inter" : 540 - 360}, {"start" : 960 , "inter" : 1140 - 960}],    # 6 - 9 -- 16 - 19  (360 - 540 -- 960 - 1140)
-        "Fz5" : [{"start" : 180 , "inter" : 540 - 180}, {"start" : 900 , "inter" : 1200 - 900}],    # 3 - 9 -- 15 - 20  (180 - 540 -- 900 - 1200)
-        "Fz6" : [{"start" : 0 , "inter" : 1440}]                                                    # 0-24          (0 - 1440)
-    }
-mapping_dict = {}
+    "Fz1": [{"start": 420, "inter": 540 - 420, "re": 1}, {"start": 960, "inter": 1140 - 960, "re": 0}],
+    "Fz2": [{"start": 360, "inter": 540 - 360, "re": 1}, {"start": 960, "inter": 1140 - 960, "re": 0}],
+    "Fz3": [{"start": 540, "inter": 960 - 540, "re": 0}],
+    "Fz4": [{"start": 360, "inter": 540 - 360, "re": 1}, {"start": 960, "inter": 1140 - 960, "re": 0}],
+    "Fz5": [{"start": 180, "inter": 540 - 180, "re": 1}, {"start": 900, "inter": 1200 - 900, "re": 0}],
+    "Fz6": [{"start": 0, "inter": 1440, "re": 0}]
+}
 
-def generate_dict():
-    csv_mapping_file = open("file_mapping.csv", "r")
+mapping_dict = {}
+mapping_dict_home = {}
+mapping_dict_db = {}
+
+
+def generate_mapping_dict_db():
+    csv_mapping_file = open("mappings/file_mapping_db.csv", "r")
     csv_mapping = csv.reader(csv_mapping_file)
     mapping = []
+
     for line in csv_mapping:
         mapping.append(line)
-        mapping_dict[line[3]] = []
+        mapping_dict_db[line[4]] = []
 
     for line in mapping:
-        mapping_dict[line[3]].append(line[0])
+        mapping_dict_db[line[4]].append((line[1], line[2]))
 
-    print("Finished Dict")
+    print("Finished Bahn mapping Dict")
 
-def iterate_threw_traffic():
+
+def generate_mapping_dict_real(fz):
+    csv_mapping_file = open("mappings/file_mapping_real_" + fz + ".csv", "r")
+    csv_mapping = csv.reader(csv_mapping_file)
+    mapping = []
+    local_mapping_dict = {}
+
+    for line in csv_mapping:
+        mapping.append(line)
+        local_mapping_dict[line[3]] = []
+
+    for line in mapping:
+        local_mapping_dict[line[3]].append((line[1], line[0]))
+
+    print("Finished real mapping Dict")
+    return local_mapping_dict
+
+
+def iterate_threw_traffic(tag):
+    # Open Verkehrsprognose
     csv_traffic = open(trafficPath, encoding='utf-8')
     traffic = csv.DictReader(csv_traffic, delimiter=';')
 
+    # Relevante Verkehrsmittel und Arten
     verkehrsmittel = ["Bahn", "OESPV"]
-    verkehrsarten = ["Fz1", "Fz2", "Fz3", "Fz4", "Fz5", "Fz6"]
 
-    csv_file = open('reisekette_v03.csv', 'w')
-    csv_writer = csv.writer(csv_file)
-    header = ['quelle', 'ziel', 'zeit', 'reverse']
-    csv_writer.writerow(header)
+
+
 
     for mappings in traffic:
         for mittel in verkehrsmittel:
-            for art in verkehrsarten:
-                mittel_art = mittel + "_" + art
 
-                traffic_akt = round(int(mappings[mittel_art]) / 365)
+            mittel_art = mittel + "_" + tag
 
-                for i in range(traffic_akt):
-                    time = get_random_time(art)
-                    re = random.randint(0, 1)
+            # Relevanter traffic pro Tag
+            traffic_akt = round(int(mappings[mittel_art]) / 365)
 
-                    if re == 1:
-                        time = time + 3600
+            # Generate Traffic pro Bewegung am Tag
+            for i in range(traffic_akt):
 
-                    quelle = get_random_haltestelle(mappings["# Quelle"])
-                    ziel = get_random_haltestelle(mappings["Ziel"])
+                # Zufällige Zeit und dazugehörger Reversetag
+                # re e [0,1]
+                re, time = get_time(tag)
 
-                    if quelle == -1 or ziel == -1:
-                        continue
+                quelle, ziel = get_realistic_haltestelle(mappings["# Quelle"], mappings["Ziel"], re)
 
-                    csv_writer.writerow([quelle, ziel, time, re])
+                # Skip, falls Problem auftritt mit Haltestelle
+                if quelle == -1 or ziel == -1:
+                    continue
+
+                csv_writer.writerow([quelle[0], quelle[1], ziel[0], ziel[1], time, re])
+
 
 def get_random_haltestelle(kkz):
-
     try:
-        relevant_class = mapping_dict[kkz]
+        relevant_class = mapping_dict_db[kkz]
         if len(relevant_class) == 1:
             return relevant_class[0]
         else:
@@ -75,20 +109,71 @@ def get_random_haltestelle(kkz):
     except:
         return -1
 
-def get_realistic_haltestelle(kkz):
-    return -1
 
-def get_random_time(fzg_klasse):
+def get_realistic_haltestelle(quelle, ziel, re):
+    try:
+        # Quelle: Home oder Random -> Ziel immer Tag
+        if re == 0:
+            if random.randrange(0, 100, step=1) > prob_quelle_random * 100:
+                try:
+                    relevant_class_quelle = mapping_dict_home[quelle]
+                    quelle = relevant_class_quelle[random.randrange(len(relevant_class_quelle) - 1)]
+                except:
+                    quelle = get_random_haltestelle(quelle)
+            else:
+                quelle = get_random_haltestelle(quelle)
+            try:
+                relevant_class_ziel = mapping_dict[ziel]
+                ziel = relevant_class_ziel[random.randrange(len(relevant_class_ziel) - 1)]
+            except:
+                ziel = get_random_haltestelle(ziel)
 
+            return quelle, ziel
+
+        # Quelle: Tag oder Random -> Ziel immer Home
+        else:
+            if random.randrange(0, 100, step=1) > prob_quelle_random * 100:
+                try:
+                    relevant_class_quelle = mapping_dict[quelle]
+                    quelle = relevant_class_quelle[random.randrange(len(relevant_class_quelle) - 1)]
+                except:
+                    quelle = get_random_haltestelle(quelle)
+
+            else:
+                quelle = get_random_haltestelle(quelle)
+
+            try:
+                relevant_class_ziel = mapping_dict_home[ziel]
+                ziel = relevant_class_ziel[random.randrange(len(relevant_class_ziel) - 1)]
+            except:
+                ziel = get_random_haltestelle(ziel)
+
+            return quelle, ziel
+    except:
+        return -1, -1
+
+
+def get_time(fzg_klasse):
     relevant_class = classes[fzg_klasse]
-    if len(relevant_class) == 1:
-        i = 0
-    else:
-        i = random.randrange(len(relevant_class) - 1)
 
-    time_of_day = (relevant_class[i]["start"] * 60 + random.randrange(relevant_class[i]["inter"]) * 60)
-    return 1616626800 + time_of_day
+    i = random.randrange(0, len(relevant_class))
 
-generate_dict()
-iterate_threw_traffic()
+    time_of_day = (relevant_class[i]["start"] * 60 + random.randrange(0, relevant_class[i]["inter"]) * 60)
+    return relevant_class[i]["re"], day + time_of_day
 
+
+# Dict für Homes in erkannten Regionen
+mapping_dict_home = generate_mapping_dict_real("Home")
+generate_mapping_dict_db()
+
+
+
+tags = ["Fz2", "Fz3", "Fz4", "Fz5", "Fz6"]
+
+for tag in tags:
+    try:
+        mapping_dict = generate_mapping_dict_real(tag)
+    except:
+        print("No Tag found, using random data based on DB")
+        mapping_dict = mapping_dict_db
+    iterate_threw_traffic(tag)
