@@ -129,3 +129,7 @@ NUTS_ALL_LEVELS.png
 121_Undine_001_RIS_mit_RailTeam_und_OEPNV_HRD_5.20.26_J18/
 
 *.zip
+
+src/file_mapping.csv
+
+src/reiseketten/reisekette_v03.csv
